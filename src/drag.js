@@ -8,6 +8,12 @@ export function initDrag() {
   let initialX = 0
   let initialY = 0
   let isDragging = false
+  let lastTouch = null
+  let longPressTimer = null
+  const LONG_PRESS_DURATION = 500  // 长按触发时间（毫秒）
+  let initialTouchX = 0
+  let initialTouchY = 0
+  const TOUCH_MOVE_THRESHOLD = 10  // 触摸移动阈值（像素）
 
   // 初始化所有书签项为可拖拽
   function initDraggableItems() {
@@ -20,17 +26,140 @@ export function initDrag() {
     })
   }
 
-  // 为每个书签添加拖拽事件
+  // 为每个书签添加拖拽事件（鼠标 + 触摸）
   function initDragEvents(item) {
+    // 鼠标事件
     item.addEventListener('mousedown', handleDragStart)
     item.addEventListener('mousemove', handleDragMove)
     item.addEventListener('mouseup', handleDragEnd)
     item.addEventListener('mouseleave', handleDragEnd)
+
+    // 触摸事件
+    item.addEventListener('touchstart', handleTouchStart, { passive: false })
+    item.addEventListener('touchmove', handleTouchMove, { passive: false })
+    item.addEventListener('touchend', handleTouchEnd)
+    item.addEventListener('touchcancel', handleTouchEnd)
+  }
+
+  // 开始长按检测
+  function startLongPressTimer(e, elem) {
+    const touch = e.touches[0]
+    initialTouchX = touch.clientX
+    initialTouchY = touch.clientY
+
+    clearLongPressTimer()
+    longPressTimer = setTimeout(() => {
+      // 添加视觉反馈
+      elem.style.transform = 'scale(1.1)'
+      // 触发拖拽
+      startDragging(e, elem)
+    }, LONG_PRESS_DURATION)
+  }
+
+  // 清除长按定时器
+  function clearLongPressTimer() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer)
+      longPressTimer = null
+    }
+  }
+
+  // 检查触摸是否移动超过阈值
+  function hasTouchMoved(e) {
+    const touch = e.touches[0]
+    const moveX = Math.abs(touch.clientX - initialTouchX)
+    const moveY = Math.abs(touch.clientY - initialTouchY)
+    return moveX > TOUCH_MOVE_THRESHOLD || moveY > TOUCH_MOVE_THRESHOLD
   }
 
   // 开始拖拽
+  function startDragging(e, elem) {
+    const touch = e.touches[0]
+    draggingElem = elem
+    isDragging = true
+    lastTouch = touch
+
+    // 记录初始位置
+    initialX = touch.clientX - draggingElem.offsetLeft
+    initialY = touch.clientY - draggingElem.offsetTop
+
+    // 创建占位符
+    placeholder = document.createElement('div')
+    placeholder.className = 'bookmark-placeholder'
+    draggingElem.parentNode.insertBefore(placeholder, draggingElem)
+
+    // 设置拖拽样式
+    draggingElem.classList.add('dragging')
+    
+    // 更新拖拽元素位置
+    updateDraggingPosition(touch)
+
+    // 添加震动反馈（如果设备支持）
+    if (navigator.vibrate) {
+      navigator.vibrate(50)
+    }
+  }
+
+  // 触摸开始
+  function handleTouchStart(e) {
+    e.preventDefault() // 防止触发鼠标事件
+    if (e.touches.length !== 1) return // 只处理单指触摸
+
+    startLongPressTimer(e, e.currentTarget)
+  }
+
+  // 触摸移动
+  function handleTouchMove(e) {
+    e.preventDefault()
+    
+    // 如果还没开始拖拽，检查是否应该取消长按
+    if (!isDragging) {
+      if (hasTouchMoved(e)) {
+        clearLongPressTimer()
+        if (draggingElem) {
+          draggingElem.style.transform = ''
+        }
+      }
+      return
+    }
+
+    // 已经在拖拽中
+    if (e.touches.length !== 1) return
+    const touch = e.touches[0]
+    lastTouch = touch
+    updateDraggingPosition(touch)
+    updatePlaceholderPosition(touch)
+  }
+
+  // 触摸结束
+  function handleTouchEnd(e) {
+    e.preventDefault()
+    
+    // 清除长按定时器
+    clearLongPressTimer()
+    
+    // 如果没有在拖拽中，恢复元素样式
+    if (!isDragging && draggingElem) {
+      draggingElem.style.transform = ''
+      draggingElem = null
+      return
+    }
+
+    if (!isDragging) return
+    
+    // 使用最后一次触摸位置
+    if (lastTouch) {
+      updatePlaceholderPosition(lastTouch)
+    }
+    
+    finishDrag()
+  }
+
+  // 开始拖拽（鼠标）
   function handleDragStart(e) {
     if (e.button !== 0) return // 只响应左键
+    e.preventDefault()
+    
     draggingElem = e.currentTarget
     isDragging = true
 
@@ -74,7 +203,14 @@ export function initDrag() {
     if (!draggingElem) return
     const x = e.clientX - initialX
     const y = e.clientY - initialY
-    draggingElem.style.transform = `translate(${x}px, ${y}px)`
+    
+    // 限制拖拽范围在视窗内
+    const maxX = window.innerWidth - draggingElem.offsetWidth
+    const maxY = window.innerHeight - draggingElem.offsetHeight
+    const boundedX = Math.max(0, Math.min(x, maxX))
+    const boundedY = Math.max(0, Math.min(y, maxY))
+    
+    draggingElem.style.transform = `translate(${boundedX}px, ${boundedY}px)`
   }
 
   // 更新占位符位置
@@ -97,14 +233,16 @@ export function initDrag() {
   }
 
   // 结束拖拽
-  function handleDragEnd() {
+  function handleDragEnd(e) {
     if (!isDragging) return
+    e.preventDefault()
     finishDrag()
   }
 
-  // 全局结束拖拽
-  function handleGlobalDragEnd() {
+  // 全局结束拖拽（鼠标）
+  function handleGlobalDragEnd(e) {
     if (!isDragging) return
+    e.preventDefault()
     finishDrag()
   }
 
@@ -127,6 +265,8 @@ export function initDrag() {
     draggingElem = null
     placeholder = null
     isDragging = false
+    lastTouch = null
+    clearLongPressTimer()
 
     // 移除全局事件监听
     document.removeEventListener('mousemove', handleGlobalDragMove)

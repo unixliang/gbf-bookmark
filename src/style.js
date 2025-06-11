@@ -126,6 +126,7 @@ const css = `
   display: block;
   position: relative;
   pointer-events: auto;
+  transition: transform 0.2s ease;
 }
 .bookmark-item-child {
   display: none;
@@ -522,6 +523,33 @@ a.bookmark-item-lacia:active:before, a.bookmark-item-lacia:active:after {
   border: 2px dashed #03A9F4;
   height: 24px;
   margin: 2px 0;
+}
+
+/* 触摸设备样式 */
+@media (hover: none) and (pointer: coarse) {
+  .bookmark-item-lacia.draggable {
+    cursor: grab;
+    touch-action: none;  /* 防止触摸时页面滚动 */
+  }
+  
+  .bookmark-item-lacia.dragging {
+    cursor: grabbing;
+    transform-origin: center center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+  }
+  
+  /* 增大触摸区域 */
+  .bookmark-item-lacia {
+    min-height: 36px;  /* 更大的点击区域 */
+    line-height: 36px;
+  }
+  
+  /* 增大占位符区域 */
+  .bookmark-placeholder {
+    height: 36px;
+    transition: all 0.2s ease;
+  }
 }
 `
 
