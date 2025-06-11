@@ -3,6 +3,7 @@ import config from './config'
 import template from './template'
 import event from './event'
 import { applyConfig, initIpt } from './config'
+import { initDrag } from './drag'
 
 const recordTime = () => {
   localStorage.setItem('gbf-bookmark:time', Date.now())
@@ -80,6 +81,7 @@ const main = () => {
     event()
     initIpt()
     applyConfig()
+    initDrag()
     if (Date.now() - time > config.hideDelay * 1000 && config.hideDelay > 0) {
       container.style.opacity = 0
     } else {

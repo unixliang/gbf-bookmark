@@ -128,18 +128,21 @@ const renderList = () => {
           if (parent && (!item.parent || item.index === parent)) {
             className += ' bookmark-item-parent'
           }
+          const bookmarkId = item.id || `bookmark-${item.index}-${Date.now()}`
+          item.id = bookmarkId
+
           if (item.url === 'reload') {
-            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="location.reload()"><div>${item.name || 'NoName'}</div></a>`
+            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="location.reload()" data-bookmark-id="${bookmarkId}"><div>${item.name || 'NoName'}</div></a>`
           } else if (item.url === 'back') {
-            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="history.back()"><div>${item.name || 'NoName'}</div></a>`
+            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="history.back()" data-bookmark-id="${bookmarkId}"><div>${item.name || 'NoName'}</div></a>`
           } else if (item.url === 'back&forward') {
-            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="history.back();setTimeout(() => history.forward(), 100)"><div>${item.name || 'NoName'}</div></a>`
+            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="history.back();setTimeout(() => history.forward(), 100)" data-bookmark-id="${bookmarkId}"><div>${item.name || 'NoName'}</div></a>`
           } else if (item.url === 'none') {
-            str += `<a style="background-color:${bg};color:${color}" class="${className}"><div>${item.name || 'NoName'}</div></a>`
+            str += `<a style="background-color:${bg};color:${color}" class="${className}" data-bookmark-id="${bookmarkId}"><div>${item.name || 'NoName'}</div></a>`
           } else if (item.url === 'forward') {
-            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="history.forward()"><div>${item.name || 'NoName'}</div></a>`
+            str += `<a style="background-color:${bg};color:${color}" class="${className}" onclick="history.forward()" data-bookmark-id="${bookmarkId}"><div>${item.name || 'NoName'}</div></a>`
           } else {
-            str += `<a style="background-color:${bg};color:${color}" class="${className}" href="${item.url}"><div>${item.name || 'NoName'}</div></a>`
+            str += `<a style="background-color:${bg};color:${color}" class="${className}" href="${item.url}" data-bookmark-id="${bookmarkId}"><div>${item.name || 'NoName'}</div></a>`
           }
         } else {
           str += `<div class="bookmark-item-lacia"></div>`

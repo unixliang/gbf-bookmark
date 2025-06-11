@@ -1,4 +1,3 @@
-
 const css = `
 #gbf-bookmark-lacia {
   position: fixed;
@@ -498,6 +497,31 @@ a.bookmark-item-lacia:active:before, a.bookmark-item-lacia:active:after {
 }
 #gbf-bookmark-setting .ipt-setting-bookmark:focus, .ipt-tagmodal:focus {
   outline: 0;
+}
+
+/* 拖拽相关样式 */
+.bookmark-item-lacia.draggable {
+  cursor: move;
+  user-select: none;
+}
+
+.bookmark-item-lacia.dragging {
+  opacity: 0.5;
+  position: absolute;
+  pointer-events: none;
+  z-index: 10000000;
+}
+
+.bookmark-item-lacia.drag-over {
+  border: 2px dashed #03A9F4;
+}
+
+/* 拖拽时的占位符 */
+.bookmark-placeholder {
+  background: rgba(3, 169, 244, 0.1);
+  border: 2px dashed #03A9F4;
+  height: 24px;
+  margin: 2px 0;
 }
 `
 
